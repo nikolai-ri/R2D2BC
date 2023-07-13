@@ -635,6 +635,40 @@ export class TextHighlighter {
   bindEvents(el: any, _scope: any, hasEventListener: boolean) {
     let doc = el.ownerDocument;
 
+    if (this.navigator.contentProtectionModule?.properties?.enableObfuscation) {
+      const scrollElement = parent.document.getElementById("iframe-wrapper");
+      if (scrollElement) {
+        let mouseButtonDown = false;
+        let yOffset = 0;
+        let xOffset = 0;
+
+        const preventScrollEvent = () => {
+          if (mouseButtonDown) {
+            scrollElement.scrollTo({
+              top: yOffset,
+              left: xOffset,
+              behavior: "auto",
+            });
+          }
+        };
+
+        const checkMouseButton = (ev) => {
+          const flags = ev.buttons !== undefined ? ev.buttons : ev.which;
+          mouseButtonDown = (flags & 1) === 1;
+        };
+
+        el.addEventListener("mousedown", (ev) => {
+          yOffset = scrollElement.scrollTop;
+          xOffset = scrollElement.scrollLeft;
+          checkMouseButton(ev);
+        });
+        el.addEventListener("mousemove", checkMouseButton);
+        el.addEventListener("mouseup", checkMouseButton);
+
+        scrollElement.addEventListener("scroll", preventScrollEvent);
+      }
+    }
+
     el.addEventListener("mouseup", this.toolboxShowDelayed.bind(this));
     el.addEventListener("touchend", this.toolboxShowDelayed.bind(this));
     doc.addEventListener("mouseup", this.toolboxShowDelayed.bind(this));
